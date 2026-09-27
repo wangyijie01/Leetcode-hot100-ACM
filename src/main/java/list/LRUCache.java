@@ -1,87 +1,82 @@
 package list;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * LRU缓存
- *
  */
 public class LRUCache {
-
-    public static void main(String[] args){
-        LRUCache lruCache = new LRUCache(2);
-        lruCache.put(1, 1);
-        lruCache.put(2, 2);
-        System.out.println(lruCache.get(1));
-        lruCache.put(3, 3);
-        System.out.println(lruCache.get(1));
-        System.out.println(lruCache.get(2));
-        System.out.println(lruCache.get(3));
-    }
-
-
     public static class Node{
-        int key, value;
-        Node next, prev;
-        public Node(int key, int value){
-            this.key = key;
-            this.value = value;
+        int key, val;
+        Node pre, next;
+        public Node(int k, int v){
+            key = k;
+            val = v;
         }
     }
 
-    public final int capacity;
-    public final Node dummy = new Node(0, 0);
-    public final Map<Integer, Node> keyToNode = new HashMap<>();
+    private Node dummy = new Node(0, 0);
+    private Map<Integer, Node> map = new HashMap<>();
+    private int capacity;
 
-    public LRUCache(int capacity){
-        this.capacity = capacity;
-        dummy.prev = dummy;
+    public LRUCache(int c){
+        capacity = c;
         dummy.next = dummy;
+        dummy.pre = dummy;
     }
 
     public int get(int key){
         Node node = getNode(key);
-        return node == null ? -1 : node.value;
+        return node == null ? -1 : node.val;
     }
 
     public void put(int key, int value){
-        Node node = getNode(key);  //拿出节点并且放到最前面
+        Node node = getNode(key);
         if(node != null){
-            node.value = value;
+            node.val = value;
             return;
         }
-
         node = new Node(key, value);
-        keyToNode.put(key, node);
+        map.put(key, node);
         pushFront(node);
-        if(this.capacity < keyToNode.size()){
-            Node backNode = dummy.prev;
-            keyToNode.remove(backNode.key);
-            remove(backNode);
+        if(map.size() > capacity){
+            Node n = dummy.pre;
+            map.remove(n.key);
+            remove(n);
         }
     }
 
 
     public Node getNode(int key){
-        if(!keyToNode.containsKey((key))){
+        if(!map.containsKey(key)){
             return null;
         }
-        Node cur = keyToNode.get(key);
-        remove(cur);
-        pushFront(cur);
-        return cur;
+        Node node = map.get(key);
+        remove(node);
+        pushFront(node);
+        return node;
     }
 
     public void remove(Node node){
-        node.next.prev = node.prev;
-        node.prev.next = node.next;
+        node.pre.next = node.next;
+        node.next.pre = node.pre;
     }
 
     public void pushFront(Node node){
         node.next = dummy.next;
-        node.prev = dummy;
-        dummy.next = node;
-        node.next.prev = node;
+        node.pre = dummy;
+        node.next.pre = node;
+        node.pre.next = node;
     }
+
+
+    public static void main(String[] args){
+        LRUCache lru = new LRUCache(2);
+        lru.put(1,1);
+        lru.put(2,2);
+        System.out.println(lru.get(1)); // 输出 1
+        lru.put(3, 3); // 删除键 2
+        System.out.println(lru.get(2)); // 输出 -1
+
+    }
+
 }
